@@ -1,0 +1,15 @@
+{
+  "name": "github-issue-monitor",
+  "version": "1.0.0",
+  "description": "AI-powered GitHub issue monitoring with Slack and Email notifications",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/analyze-issues.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@octokit/rest": "^21.0.0",
+    "@sendgrid/mail": "^8.1.0"
+  }
+}
