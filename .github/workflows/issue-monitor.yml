@@ -24,8 +24,7 @@ jobs:
       - name: Run issue analyzer
         run: node scripts/analyze-issues.js
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GH_MODELS_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
           NOTIFY_EMAIL: ${{ vars.NOTIFY_EMAIL }}

@@ -1,11 +1,9 @@
 import { Octokit } from '@octokit/rest';
-import Anthropic from '@anthropic-ai/sdk';
 import sgMail from '@sendgrid/mail';
 
 // Environment variables
 const {
   GITHUB_TOKEN,
-  ANTHROPIC_API_KEY,
   SLACK_WEBHOOK_URL,
   SENDGRID_API_KEY,
   NOTIFY_EMAIL,
@@ -16,8 +14,10 @@ const {
 
 // Initialize clients
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
-const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 sgMail.setApiKey(SENDGRID_API_KEY);
+
+// GitHub Models endpoint
+const GITHUB_MODELS_URL = 'https://models.inference.ai.azure.com/chat/completions';
 
 /**
  * Fetch issues created in the last 24 hours
@@ -44,7 +44,7 @@ async function fetchRecentIssues() {
 }
 
 /**
- * Analyze an issue with Claude
+ * Analyze an issue with GitHub Models (GPT-4o)
  */
 async function analyzeIssue(issue) {
   const prompt = `Analyze this GitHub issue and provide a JSON response with your analysis.
@@ -63,16 +63,32 @@ Respond with ONLY valid JSON in this exact format:
   "estimatedEffort": "Small" | "Medium" | "Large"
 }`;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 500,
-    messages: [{ role: 'user', content: prompt }],
+  const response = await fetch(GITHUB_MODELS_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${GITHUB_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 500,
+      temperature: 0.3,
+    }),
   });
 
-  const text = response.content[0].text;
+  if (!response.ok) {
+    throw new Error(`GitHub Models API error: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  const text = data.choices[0].message.content;
 
   try {
-    return JSON.parse(text);
+    // Handle potential markdown code blocks in response
+    const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/```\s*([\s\S]*?)\s*```/);
+    const jsonStr = jsonMatch ? jsonMatch[1] : text;
+    return JSON.parse(jsonStr.trim());
   } catch {
     // If parsing fails, return a default analysis
     return {

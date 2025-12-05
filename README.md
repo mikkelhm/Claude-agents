@@ -1,11 +1,11 @@
 # GitHub Issue Monitor AI Agent
 
-An AI-powered GitHub Actions workflow that monitors [umbraco/Umbraco.Cloud.Issues](https://github.com/umbraco/Umbraco.Cloud.Issues) for new issues daily, analyzes them with Claude, and sends notifications to Slack and Email.
+An AI-powered GitHub Actions workflow that monitors [umbraco/Umbraco.Cloud.Issues](https://github.com/umbraco/Umbraco.Cloud.Issues) for new issues daily, analyzes them with GitHub Models (GPT-4o), and sends notifications to Slack and Email.
 
 ## Features
 
 - **Daily Monitoring**: Runs at 8am UTC to check for new issues
-- **AI Analysis**: Uses Claude to analyze each issue and provide:
+- **AI Analysis**: Uses GPT-4o via GitHub Models to analyze each issue and provide:
   - Priority (Critical/High/Medium/Low)
   - Category (Bug/Feature Request/Question/etc.)
   - Summary
@@ -28,11 +28,24 @@ Go to your repository **Settings > Secrets and variables > Actions** and add:
 
 | Secret | Description |
 |--------|-------------|
-| `ANTHROPIC_API_KEY` | Your Claude API key from [console.anthropic.com](https://console.anthropic.com) |
+| `GH_MODELS_TOKEN` | GitHub Personal Access Token (see below) |
 | `SLACK_WEBHOOK_URL` | Slack Incoming Webhook URL (see below) |
 | `SENDGRID_API_KEY` | SendGrid API key for email notifications |
 
-### 3. Configure Variables
+### 3. Create GitHub Token for Models Access
+
+1. Go to [github.com/settings/tokens](https://github.com/settings/tokens?type=beta)
+2. Click **"Generate new token"** (Fine-grained)
+3. Give it a name (e.g., "Issue Monitor")
+4. Set expiration as needed
+5. Under **Repository access**, select "Public repositories (read-only)"
+6. No additional permissions needed for public repos
+7. Click **"Generate token"**
+8. Copy and add as `GH_MODELS_TOKEN` secret
+
+**Note**: GitHub Models requires Copilot access. If you have GitHub Copilot, you have access to GitHub Models.
+
+### 4. Configure Variables
 
 Go to **Settings > Secrets and variables > Actions > Variables** and add:
 
@@ -41,7 +54,7 @@ Go to **Settings > Secrets and variables > Actions > Variables** and add:
 | `NOTIFY_EMAIL` | Email address to receive notifications |
 | `SENDER_EMAIL` | Verified sender email in SendGrid |
 
-### 4. Set Up Slack Webhook
+### 5. Set Up Slack Webhook
 
 1. Go to [api.slack.com/apps](https://api.slack.com/apps)
 2. Click **Create New App** > **From scratch**
@@ -51,7 +64,7 @@ Go to **Settings > Secrets and variables > Actions > Variables** and add:
 6. Select the channel for notifications
 7. Copy the webhook URL and add it as `SLACK_WEBHOOK_URL` secret
 
-### 5. Set Up SendGrid
+### 6. Set Up SendGrid
 
 1. Create account at [sendgrid.com](https://sendgrid.com)
 2. Go to **Settings > API Keys** > Create API Key
@@ -78,7 +91,7 @@ REPO_OWNER: umbraco
 REPO_NAME: Umbraco.Cloud.Issues
 ```
 
-**Note**: The target repository is public, so the default `GITHUB_TOKEN` works. For private repositories, you'd need a Personal Access Token with `repo` scope.
+**Note**: The target repository is public, so a basic token works. For private repositories, you'd need a Personal Access Token with `repo` scope.
 
 ### Change Schedule
 
@@ -95,11 +108,11 @@ Common schedules:
 
 ### Modify AI Analysis
 
-Edit the prompt in `scripts/analyze-issues.js` in the `analyzeIssue()` function to customize what Claude analyzes.
+Edit the prompt in `scripts/analyze-issues.js` in the `analyzeIssue()` function to customize what the AI analyzes.
 
 ## Cost Estimates
 
 - **GitHub Actions**: Free for public repos, 2000 min/month for private
-- **Claude API**: ~$0.01-0.05 per issue (depends on issue length)
+- **GitHub Models**: Included with GitHub Copilot subscription
 - **SendGrid**: Free tier includes 100 emails/day
 - **Slack**: Free (incoming webhooks)
